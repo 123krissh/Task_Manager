@@ -51,7 +51,7 @@ export const Dashboard = () => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            👋 Welcome back, {user?.name?.split(' ')[0]}
+            Welcome back, {user?.name?.split(' ')[0]}
           </h1>
           <p className="text-gray-500 mt-1">
             Here's what's happening today.
@@ -158,7 +158,7 @@ export const Dashboard = () => {
             </h2>
 
             {data.dueSoon.length === 0 ? (
-              <p className="text-sm text-gray-500">No upcoming deadlines 🎉</p>
+              <p className="text-sm text-gray-500">No upcoming deadlines...</p>
             ) : (
               <div className="space-y-3">
                 {data.dueSoon.map((task: any) => (

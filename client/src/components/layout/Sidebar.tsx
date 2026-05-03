@@ -22,7 +22,7 @@ export const Sidebar = ({ onCollapse }: SidebarProps) => {
   ];
 
   return (
-    <aside className="w-[280px] min-h-screen bg-sidebar flex flex-col">
+    <aside className="w-[280px] h-screen flex flex-col bg-sidebar">
       <div className="p-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
@@ -30,7 +30,7 @@ export const Sidebar = ({ onCollapse }: SidebarProps) => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">TaskFlow</h1>
-            <p className="text-xs text-indigo-200">Team Manager</p>
+            <p className="text-xs text-indigo-200">By Ethara.AI</p>
           </div>
         </div>
       </div>

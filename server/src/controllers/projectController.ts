@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { Project, User, Task } from '../models';
 import { AuthRequest } from '../middleware/auth';
+import { Types } from 'mongoose';
 
 const isProjectAdmin = (project: any, userId: string): boolean =>
   project.owner.toString() === userId ||
@@ -18,25 +19,103 @@ export const getProjects = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    const projects = await Project.find({
-      $or: [
-        { owner: req.userId },
-        { 'members.user': req.userId }
-      ]
-    })
-      .populate('owner', 'name email avatar')
-      .populate('members.user', 'name email avatar')
-      .sort({ createdAt: -1 });
+    const projects = await Project.aggregate([
+      {
+        $match: {
+          $or: [
+            { owner: new Types.ObjectId(req.userId) },
+            { 'members.user': new Types.ObjectId(req.userId) }
+          ]
+        }
+      },
+
+      // JOIN TASKS
+      {
+        $lookup: {
+          from: 'tasks',
+          localField: '_id',
+          foreignField: 'project',
+          as: 'tasks'
+        }
+      },
+
+      // ADD COUNTS
+      {
+        $addFields: {
+          taskCount: { $size: '$tasks' },
+          completedCount: {
+            $size: {
+              $filter: {
+                input: '$tasks',
+                as: 'task',
+                cond: {
+                  $eq: [
+                    { $toLower: '$$task.status' },
+                    'completed'
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+
+      // REMOVE tasks array (optional cleanup)
+      {
+        $project: {
+          tasks: 0
+        }
+      },
+
+      // SORT
+      {
+        $sort: { createdAt: -1 }
+      }
+    ]);
+
+    // Populate manually after aggregation
+    const populatedProjects = await Project.populate(projects, [
+      { path: 'owner', select: 'name email avatar' },
+      { path: 'members.user', select: 'name email avatar' }
+    ]);
 
     res.json({
       success: true,
-      data: projects
+      data: populatedProjects
     });
+
   } catch (error) {
     console.error('Get projects error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+// export const getProjects = async (req: AuthRequest, res: Response): Promise<void> => {
+//   try {
+//     if (!req.userId) {
+//       res.status(401).json({ success: false, message: 'Unauthorized' });
+//       return;
+//     }
+
+//     const projects = await Project.find({
+//       $or: [
+//         { owner: req.userId },
+//         { 'members.user': req.userId }
+//       ]
+//     })
+//       .populate('owner', 'name email avatar')
+//       .populate('members.user', 'name email avatar')
+//       .sort({ createdAt: -1 });
+
+//     res.json({
+//       success: true,
+//       data: projects
+//     });
+//   } catch (error) {
+//     console.error('Get projects error:', error);
+//     res.status(500).json({ success: false, message: 'Server error' });
+//   }
+// };
 
 // POST /api/projects (Create a new project)
 // @access  Private

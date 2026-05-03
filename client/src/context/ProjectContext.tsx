@@ -11,6 +11,8 @@ interface Project {
     user: any;
     role: 'admin' | 'member';
   }>;
+  taskCount?: number;
+  completedCount?: number;
   createdAt: string;
   updatedAt: string;
 }
